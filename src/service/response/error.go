@@ -11,10 +11,10 @@ type ErrorParams struct {
 	Message string
 }
 
-type ErrorResponse struct {
+type ApiResponse struct {
 }
 
-func (errorResponse ErrorResponse) Error(w http.ResponseWriter, req *http.Request, message string) {
+func (apiResponse ApiResponse) Error(w http.ResponseWriter, req *http.Request, message string) {
 	var params ErrorParams
 	params.Status = "Error"
 	params.Message = message
@@ -25,7 +25,7 @@ func (errorResponse ErrorResponse) Error(w http.ResponseWriter, req *http.Reques
 	io.WriteString(w, string(msg))
 }
 
-func (errorResponse ErrorResponse) Success(w http.ResponseWriter, req *http.Request, message string) {
+func (apiResponse ApiResponse) Success(w http.ResponseWriter, req *http.Request, message string) {
 	var params ErrorParams
 	params.Status = "Error"
 	params.Message = message
