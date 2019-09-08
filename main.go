@@ -5,8 +5,6 @@ import (
 	"user-registration-rest-api/src/service"
 )
 
-const AppSecret = "123MyRan&^dom#$#Str*&ing!"
-
 func main() {
 	service.ManageRoutes()
 }

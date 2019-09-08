@@ -2,7 +2,9 @@ package users
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/asaskevich/govalidator"
+	"io"
 	"net/http"
 	"user-registration-rest-api/src/entity"
 	"user-registration-rest-api/src/service/db"
@@ -10,7 +12,10 @@ import (
 	"user-registration-rest-api/src/service/response"
 )
 
-type RouteUsers struct {
+type RouteUsers struct{}
+
+type JWTTokenData struct {
+	Token string `json:"token"`
 }
 
 func (u RouteUsers) LoginHandler(w http.ResponseWriter, req *http.Request) {
@@ -44,6 +49,18 @@ func (u RouteUsers) LoginHandler(w http.ResponseWriter, req *http.Request) {
 		resp.Error(w, req, "Invalid password.")
 		return
 	}
+
+	var jWTTokenHelper helper.JWTTokenHelper
+	tokenString := jWTTokenHelper.GenerateToken(user.Email)
+
+	jwtTokenData := JWTTokenData{Token: tokenString}
+	jwtTokenDataBytes, err := json.Marshal(jwtTokenData)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	io.WriteString(w, string(jwtTokenDataBytes))
 }
 
 func (u RouteUsers) RegisterHandler(w http.ResponseWriter, req *http.Request) {
@@ -82,5 +99,4 @@ func (u RouteUsers) RegisterHandler(w http.ResponseWriter, req *http.Request) {
 	db.Create(&user)
 	w.WriteHeader(http.StatusCreated)
 	apiResponse.Success(w, req, "User registered successfully.")
-	// return
 }
