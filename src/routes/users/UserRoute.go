@@ -24,15 +24,23 @@ func (u RouteUsers) LoginHandler(w http.ResponseWriter, req *http.Request) {
 		panic(err)
 	}
 
+	if len(userData["email"]) == 0 || len(userData["password"]) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		resp.Error(w, req, "Missing email/password.")
+		return
+	}
+
 	queryCount := 0
 	db.GetDb().Where("email = ?", userData["email"]).First(&user).Count(&queryCount)
 	if queryCount == 0 {
+		w.WriteHeader(http.StatusBadRequest)
 		resp.Error(w, req, "There is no user registered with this email.")
 		return
 	}
 
 	var bcryptHelper helper.BcryptHelper
 	if !bcryptHelper.CheckPasswordHash(userData["password"], user.Password) {
+		w.WriteHeader(http.StatusBadRequest)
 		resp.Error(w, req, "Invalid password.")
 		return
 	}
@@ -50,11 +58,13 @@ func (u RouteUsers) RegisterHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if !govalidator.IsEmail(user.Email) {
+		w.WriteHeader(http.StatusBadRequest)
 		apiResponse.Error(w, req, "Invalid email.")
 		return
 	}
 
 	if govalidator.IsNull(user.Password) {
+		w.WriteHeader(http.StatusBadRequest)
 		apiResponse.Error(w, req, "Password is required.")
 		return
 	}
@@ -62,6 +72,7 @@ func (u RouteUsers) RegisterHandler(w http.ResponseWriter, req *http.Request) {
 	queryCount := 0
 	db.Where("email = ?", user.Email).First(&user).Count(&queryCount)
 	if queryCount > 0 {
+		w.WriteHeader(http.StatusBadRequest)
 		apiResponse.Error(w, req, "Email already taken.")
 		return
 	}
@@ -69,6 +80,7 @@ func (u RouteUsers) RegisterHandler(w http.ResponseWriter, req *http.Request) {
 	var bcryptHelper helper.BcryptHelper
 	user.Password = bcryptHelper.HashPassword(user.Password)
 	db.Create(&user)
+	w.WriteHeader(http.StatusCreated)
 	apiResponse.Success(w, req, "User registered successfully.")
 	// return
 }
