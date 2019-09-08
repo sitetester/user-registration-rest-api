@@ -20,7 +20,7 @@ type JWTTokenData struct {
 }
 
 func (u RouteUsers) LoginHandler(w http.ResponseWriter, req *http.Request) {
-	var resp response.ApiResponse
+	var apiResponse response.ApiResponse
 	var user entity.User
 	userData := make(map[string]string)
 
@@ -32,7 +32,7 @@ func (u RouteUsers) LoginHandler(w http.ResponseWriter, req *http.Request) {
 
 	if len(userData["email"]) == 0 || len(userData["password"]) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		resp.Error(w, req, "Missing email/password.")
+		apiResponse.Error(w, req, "Missing email/password.")
 		return
 	}
 
@@ -40,14 +40,14 @@ func (u RouteUsers) LoginHandler(w http.ResponseWriter, req *http.Request) {
 	db.GetDb().Where("email = ?", userData["email"]).First(&user).Count(&queryCount)
 	if queryCount == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		resp.Error(w, req, "There is no user registered with this email.")
+		apiResponse.Error(w, req, "There is no user registered with this email.")
 		return
 	}
 
 	var bcryptHelper helper.BcryptHelper
 	if !bcryptHelper.CheckPasswordHash(userData["password"], user.Password) {
 		w.WriteHeader(http.StatusBadRequest)
-		resp.Error(w, req, "Invalid password.")
+		apiResponse.Error(w, req, "Invalid password.")
 		return
 	}
 
@@ -124,6 +124,8 @@ func (u RouteUsers) DashboardHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (u RouteUsers) UploadImageHandler(w http.ResponseWriter, req *http.Request) {
+	var apiResponse response.ApiResponse
+	const MaxFileUploadSize = 5000000
 	fmt.Println("File Upload Endpoint Hit")
 
 	// Parse our multipart form, 10 << 20 specifies a maximum
@@ -133,18 +135,20 @@ func (u RouteUsers) UploadImageHandler(w http.ResponseWriter, req *http.Request)
 	// it also returns the FileHeader so we can get the Filename,
 	// the Header and the size of the file
 	file, fileHeader, err := req.FormFile("image")
-
 	if err != nil {
-		fmt.Println("Error Retrieving the File")
-		fmt.Println(err)
+		apiResponse.Error(w, req, "Error retrieving file with `image` key.")
 		return
 	}
-
 	defer file.Close()
 
 	fmt.Printf("Uploaded File: %+v\n", fileHeader.Filename)
 	fmt.Printf("File Size: %+v\n", fileHeader.Size)
 	fmt.Printf("MIME Header: %+v\n", fileHeader.Header)
+
+	if fileHeader.Size > MaxFileUploadSize {
+		apiResponse.Error(w, req, "Max allowed file upload size: 5MB")
+		return
+	}
 
 	// Create a temporary file within our temp-images directory that follows
 	// a particular naming pattern
