@@ -2,7 +2,6 @@ package users
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/asaskevich/govalidator"
 	"net/http"
 	"user-registration-rest-api/src/entity"
@@ -16,28 +15,27 @@ type RouteUsers struct {
 
 func (u RouteUsers) LoginHandler(w http.ResponseWriter, req *http.Request) {
 	var resp response.ApiResponse
+	var user entity.User
+	userData := make(map[string]string)
 
 	decoder := json.NewDecoder(req.Body)
-	var user entity.User
-	err := decoder.Decode(&user)
+	err := decoder.Decode(&userData)
 	if err != nil {
 		panic(err)
 	}
 
-	var bcryptHelper helper.BcryptHelper
-	user.Password = bcryptHelper.HashPassword(user.Password)
-
-	userPass := user.Password
-
 	queryCount := 0
-	db.GetDb().Where("email = ?", user.Email).First(&user).Count(&queryCount)
-	fmt.Println(queryCount)
-
+	db.GetDb().Where("email = ?", userData["email"]).First(&user).Count(&queryCount)
 	if queryCount == 0 {
 		resp.Error(w, req, "There is no user registered with this email.")
+		return
 	}
 
-	fmt.Println(userPass)
+	var bcryptHelper helper.BcryptHelper
+	if !bcryptHelper.CheckPasswordHash(userData["password"], user.Password) {
+		resp.Error(w, req, "Invalid password.")
+		return
+	}
 }
 
 func (u RouteUsers) RegisterHandler(w http.ResponseWriter, req *http.Request) {

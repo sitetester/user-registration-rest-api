@@ -6,6 +6,5 @@ import (
 )
 
 func main() {
-	service.ManageDb()
 	service.ManageRoutes()
 }
