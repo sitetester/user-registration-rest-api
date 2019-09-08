@@ -6,7 +6,12 @@ import (
 	"time"
 )
 
+// Concepts taken from  https://www.sohamkamani.com/blog/golang/2019-01-01-jwt-authentication/
+
 const AppSecret = "123MyRan&^dom#$#Str*&ing!"
+
+// Create the JWT key used to create the signature
+var jwtKey = []byte(AppSecret)
 
 type JWTTokenHelper struct{}
 
@@ -37,7 +42,6 @@ func (jwtTokenHelper JWTTokenHelper) GenerateToken(email string) string {
 	fmt.Println(AppSecret)
 
 	// Create the JWT string
-	var jwtKey = []byte(AppSecret)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
 		// If there is an error in creating the JWT return an internal server error
@@ -45,4 +49,26 @@ func (jwtTokenHelper JWTTokenHelper) GenerateToken(email string) string {
 	}
 
 	return tokenString
+}
+
+func (jwtTokenHelper JWTTokenHelper) CheckToken(tokenString string) bool {
+	// Initialize a new instance of `Claims`
+	claims := &Claims{}
+
+	// Parse the JWT string and store the result in `claims`.
+	// Note that we are passing the key in this method as well. This method will return an error
+	// if the tokenString is invalid (if it has expired according to the expiry time we set on sign in),
+	// or if the signature does not match
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+
+	if err != nil {
+		if err == jwt.ErrSignatureInvalid {
+			fmt.Println(err)
+		}
+		return false
+	}
+
+	return token.Valid
 }

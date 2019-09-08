@@ -100,3 +100,24 @@ func (u RouteUsers) RegisterHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	apiResponse.Success(w, req, "User registered successfully.")
 }
+
+// TODO: check request token in HTTP header (e.g Authorization Bearer XXX) or pass as cookie
+func (u RouteUsers) DashboardHandler(w http.ResponseWriter, req *http.Request) {
+	decoder := json.NewDecoder(req.Body)
+
+	var jWTTokenData JWTTokenData
+	err := decoder.Decode(&jWTTokenData)
+	if err != nil {
+		panic(err)
+	}
+
+	var jWTTokenHelper helper.JWTTokenHelper
+	tokenValid := jWTTokenHelper.CheckToken(jWTTokenData.Token)
+
+	if tokenValid {
+		io.WriteString(w, "Welcome !")
+	} else {
+		w.WriteHeader(http.StatusUnauthorized)
+		io.WriteString(w, "Invalid token.")
+	}
+}

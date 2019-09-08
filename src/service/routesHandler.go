@@ -18,6 +18,7 @@ func ManageRoutes() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", indexHandler)
 	r.HandleFunc("/users/login", u.LoginHandler).Methods("POST")
+	r.HandleFunc("/users/dashboard", u.DashboardHandler).Methods("POST")
 	r.HandleFunc("/users/register", u.RegisterHandler).Methods("POST")
 	http.Handle("/", r)
 
