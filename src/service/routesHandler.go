@@ -20,6 +20,8 @@ func ManageRoutes() {
 	r.HandleFunc("/users/login", u.LoginHandler).Methods("POST")
 	r.HandleFunc("/users/dashboard", u.DashboardHandler).Methods("POST")
 	r.HandleFunc("/users/register", u.RegisterHandler).Methods("POST")
+
+	r.HandleFunc("/users/uploadImage", u.UploadImageHandler).Methods("POST")
 	http.Handle("/", r)
 
 	http.ListenAndServe(":8090", nil)
